@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- MODELS BASED ON THE OLD BACKEND LOGIC ---
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   
+  role      UserRole @default(CLIENT) 
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  email     String?   @unique
+  address   String?
+  createdAt DateTime  @default(now())
+
+  // Relacionamento: Um cliente pode ter vários veículos e ordens de serviço
+  vehicles  Vehicle[]
+  orders    Order[]
+}
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  plate     String   @unique
+  model     String
+  brand     String
+  year      Int
+  color     String?
+  createdAt DateTime @default(now())
+
+  // Relacionamento: Um cliente pode ter mais de um carro e os carros podem ter mais de uma ordem de serviço
+  owner     Client   @relation(fields: [ownerId], references: [id])
+  ownerId   String
+  orders    Order[]
+}
+
+model Order {
+  id          String     @id @default(cuid())
+  description String
+  status      OrderStatus @default(OPEN) // Using an Enum for status is safer
+  totalValue  Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // RELATIONSHIPS: An order belongs to a client and a vehicle
+  client      Client     @relation(fields: [clientId], references: [id])
+  clientId    String
+  vehicle     Vehicle    @relation(fields: [vehicleId], references: [id])
+  vehicleId   String
+
+  // RELATIONSHIP: An order is composed of multiple parts and services
+  partsUsed   PartUsage[]
+  servicesPerformed ServiceUsage[]
+}
+
+// --- Inventory Models ---
+
+model Part {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  
+  // RELATIONSHIP: A part can be used in multiple orders
+  orders      PartUsage[]
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  price       Float
+  
+  // RELATIONSHIP: A service can be performed in multiple orders
+  orders      ServiceUsage[]
+}
+
+
+
+
+model PartUsage {
+  id        String @id @default(cuid())
+  quantity  Int    @default(1)
+  
+  order     Order  @relation(fields: [orderId], references: [id])
+  orderId   String
+  part      Part   @relation(fields: [partId], references: [id])
+  partId    String
+
+  @@unique([orderId, partId]) // Prevents adding the same part twice to the same order
+}
+
+model ServiceUsage {
+  id        String @id @default(cuid())
+
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  service   Service @relation(fields: [serviceId], references: [id])
+  serviceId String
+
+  @@unique([orderId, serviceId]) // Previne de adicionar o mesmo serviço duas vezes 
+}
+
+
+
+enum UserRole {
+  ADMIN
+  CLIENT
+}
+
+enum OrderStatus {
+  OPEN
+  IN_PROGRESS
+  FINISHED
+  CANCELED
+}
