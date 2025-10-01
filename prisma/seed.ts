@@ -18,7 +18,7 @@ async function main() {
       email: adminEmail,
       name: 'Admin Padrão',
       password: hashedPassword,
-      role: UserRole.ADMIN, // Voltamos para o uso direto
+      role: UserRole.ADMIN, 
     },
   });
 
