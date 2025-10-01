@@ -1,13 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { listClients, createClient, findClientById , updateClient, deleteClient} from '../services/client.services';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-// Rota GET /clientes para listar todos os clientes
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const clientes = await prisma.client.findMany();
+    const clientes = await listClients();
     res.json(clientes);
   } catch (error) {
     console.error("Erro ao buscar clientes:", error);
@@ -15,13 +13,27 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Rota POST /clientes para criar um novo cliente
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const cliente = await findClientById(id);
+
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+
+    res.json(cliente);
+  } catch (error) {
+    console.error("Erro ao buscar cliente por ID:", error);
+    res.status(500).json({ error: 'Não foi possível buscar o cliente.' });
+  }
+});
+
 router.post('/', async (req: Request, res: Response) => {
   try {
     const novoClienteData = req.body;
-    const cliente = await prisma.client.create({
-      data: novoClienteData,
-    });
+    const cliente = await createClient(novoClienteData);
     res.status(201).json(cliente);
   } catch (error) {
     console.error("Erro ao criar cliente:", error);
@@ -29,4 +41,34 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-export default router; 
+router.put('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const clientData = req.body;
+
+    const clienteAtualizado = await updateClient(id, clientData);
+    res.json(clienteAtualizado);
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+    console.error("Erro ao atualizar cliente:", error);
+    res.status(500).json({ error: 'Não foi possível atualizar o cliente.' });
+  }
+});
+
+router.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await deleteClient(id);
+    res.status(204).send(); 
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+    console.error("Erro ao deletar cliente:", error);
+    res.status(500).json({ error: 'Não foi possível deletar o cliente.' });
+  }
+});
+
+export default router;
