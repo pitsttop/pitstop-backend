@@ -11,7 +11,12 @@ export const listClients = async () => {
 // Função para criar um novo cliente
 export const createClient = async (clientData: any) => {
   const client = await prisma.client.create({
-    data: clientData,
+    data: {
+      name: clientData.name,
+      phone: clientData.phone,
+      email: clientData.email,
+      // Note que 'password' não é incluído aqui!
+    },
   });
   return client;
 };

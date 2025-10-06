@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { listClients, createClient, findClientById , updateClient, deleteClient} from '../services/client.services';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const clientes = await listClients();
     res.json(clientes);
@@ -13,7 +14,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -30,7 +31,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const novoClienteData = req.body;
     const cliente = await createClient(novoClienteData);
@@ -41,7 +42,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const clientData = req.body;
@@ -57,7 +58,7 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await deleteClient(id);
