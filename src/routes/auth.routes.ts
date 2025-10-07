@@ -25,7 +25,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const { token } = await loginUser(req.body);
     res.json({ token });
   } catch (error: any) {
-    // 401 Unauthorized é o status correto para falha de login
+    
     res.status(401).json({ error: error.message });
   }
 });

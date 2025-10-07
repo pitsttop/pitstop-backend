@@ -12,8 +12,8 @@
     data: {
       name: userData.name,
       email: userData.email,
-      password: hashedPassword, // Salva a senha criptografada
-      role: UserRole.CLIENT, // Força o papel de CLIENT para auto-cadastro
+      password: hashedPassword, 
+      role: UserRole.CLIENT, 
     },
   });
   return user;
@@ -36,9 +36,9 @@ export const loginUser = async (loginData: any) => {
 
   // 3. Se tudo estiver correto, gera o Token JWT
   const token = jwt.sign(
-    { userId: user.id, role: user.role }, // Informações que colocamos no "crachá"
-    process.env.JWT_SECRET!,               // A chave secreta para assinar o "crachá"
-    { expiresIn: '8h' }                    // Validade do "crachá"
+    { userId: user.id, role: user.role }, 
+    process.env.JWT_SECRET!,               
+    { expiresIn: '8h' }                   
   );
 
   return { token };

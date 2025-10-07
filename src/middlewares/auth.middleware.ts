@@ -1,35 +1,39 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { UserRole } from '@prisma/client';
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // 1. Pega o token do cabeçalho da requisição
-  const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Token não fornecido.' });
-  }
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    role: UserRole;
+  };
+}
 
-  // O token vem no formato "Bearer [token]", então separamos em duas partes
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2) {
-    return res.status(401).json({ error: 'Erro no formato do token.' });
-  }
+export const authorize = (roles: UserRole[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
 
-  const [scheme, token] = parts;
-  if (!/^Bearer$/i.test(scheme)) {
-    return res.status(401).json({ error: 'Token mal formatado.' });
-  }
-
-  // 2. Verifica se o token é válido
-  jwt.verify(token, process.env.JWT_SECRET!, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: 'Token inválido.' });
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Token não fornecido.' });
     }
 
-    // Se o token for válido, `decoded` contém os dados (userId, role).
-    // Podemos adicionar ao request para uso futuro, se quisermos.
+    const [, token] = authHeader.split(' ');
 
-    // 3. Deixa a requisição prosseguir para a rota final
-    return next();
-  });
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string, role: UserRole };
+
+      
+      if (!roles.includes(decoded.role)) {
+        return res.status(403).json({ error: 'Acesso negado: permissão insuficiente.' }); // 403 Forbidden
+      }
+
+      
+      req.user = decoded;
+
+      return next();
+    } catch (err) {
+      return res.status(401).json({ error: 'Token inválido.' });
+    }
+  };
 };
