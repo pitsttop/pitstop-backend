@@ -33,7 +33,7 @@ describe('Part Service - Unit Tests', () => {
   it('deve criar uma nova peça', async () => {
     const partData = { name: 'Filtro de Ar', price: 50, stock: 10 };
     (prisma.part.create as jest.Mock).mockResolvedValue(partData);
-    
+
     const result = await createPart(partData);
 
     expect(result).toEqual(partData);
@@ -41,7 +41,10 @@ describe('Part Service - Unit Tests', () => {
   });
 
   it('deve retornar uma lista de peças', async () => {
-    const mockParts = [{ id: '1', name: 'Filtro de Ar' }, { id: '2', name: 'Vela de Ignição' }];
+    const mockParts = [
+      { id: '1', name: 'Filtro de Ar' },
+      { id: '2', name: 'Vela de Ignição' },
+    ];
     (prisma.part.findMany as jest.Mock).mockResolvedValue(mockParts);
 
     const result = await listParts();
@@ -61,8 +64,8 @@ describe('Part Service - Unit Tests', () => {
   });
 
   it('deve atualizar uma peça', async () => {
-    const updateData = { price: 55.50 };
-    const updatedPart = { id: '1', price: 55.50 };
+    const updateData = { price: 55.5 };
+    const updatedPart = { id: '1', price: 55.5 };
     (prisma.part.update as jest.Mock).mockResolvedValue(updatedPart);
 
     const result = await updatePart('1', updateData);

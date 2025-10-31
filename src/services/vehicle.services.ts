@@ -1,10 +1,21 @@
-import { PrismaClient } from '@prisma/client';
+
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const createVehicle = async (vehicleData: any) => {
+type CreateVehicleDTO = {
+  plate: string;
+  model: string;
+  brand?: string;
+  year?: number;
+  color?: string | null;
+  ownerId: string;
+};
+
+export const createVehicle = async (vehicleData: CreateVehicleDTO) => {
+  // Pass-through the DTO to Prisma. Cast to satisfy the generated Prisma types in TS.
   return await prisma.vehicle.create({
-    data: vehicleData,
+    data: vehicleData as unknown as Prisma.VehicleCreateInput,
   });
 };
 
@@ -24,7 +35,10 @@ export const listVehiclesByClient = async (clientId: string) => {
   });
 };
 
-export const updateVehicle = async (id: string, vehicleData: any) => {
+export const updateVehicle = async (
+  id: string,
+  vehicleData: Prisma.VehicleUpdateInput,
+) => {
   return await prisma.vehicle.update({
     where: { id: id },
     data: vehicleData,

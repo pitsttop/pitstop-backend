@@ -14,8 +14,8 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const service = await serviceService.createService(req.body);
     res.status(201).json(service);
-  } catch (error) {
-    console.error('Erro ao criar o serviço:', error);
+  } catch (_error) {
+    console.error('Erro ao criar o serviço:', _error);
     res.status(500).json({ error: 'Não foi possível criar o serviço.' });
   }
 });
@@ -25,8 +25,8 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const services = await serviceService.listServices();
     res.json(services);
-  } catch (error) {
-    console.error('Erro ao listar os serviços:', error);
+  } catch (_error) {
+    console.error('Erro ao listar os serviços:', _error);
     res.status(500).json({ error: 'Não foi possível listar os serviços.' });
   }
 });
@@ -39,8 +39,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Serviço não encontrado.' });
     }
     res.json(service);
-  } catch (error) {
-    console.error('Erro ao buscar o serviço:', error);
+  } catch (_error) {
+    console.error('Erro ao buscar o serviço:', _error);
     res.status(500).json({ error: 'Não foi possível buscar o serviço.' });
   }
 });
@@ -50,11 +50,11 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const service = await serviceService.updateService(req.params.id, req.body);
     res.json(service);
-  } catch (error: any) {
-    if (error.code === 'P2025') {
+  } catch (_error) {
+    if ((_error as { code?: string }).code === 'P2025') {
       return res.status(404).json({ error: 'Serviço não encontrado.' });
     }
-    console.error('Erro ao atualizar o serviço:', error);
+    console.error('Erro ao atualizar o serviço:', _error);
     res.status(500).json({ error: 'Não foi possível atualizar o serviço.' });
   }
 });
@@ -64,11 +64,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
   try {
     await serviceService.deleteService(req.params.id);
     res.status(204).send();
-  } catch (error: any) {
-    if (error.code === 'P2025') {
+  } catch (_error) {
+    if ((_error as { code?: string }).code === 'P2025') {
       return res.status(404).json({ error: 'Serviço não encontrado.' });
     }
-    console.error('Erro ao deletar o serviço:', error);
+    console.error('Erro ao deletar o serviço:', _error);
     res.status(500).json({ error: 'Não foi possível deletar o serviço.' });
   }
 });

@@ -1,10 +1,14 @@
- import { PrismaClient, UserRole } from '@prisma/client';
- import * as bcrypt from 'bcryptjs';
- import * as jwt from 'jsonwebtoken'; 
+import { PrismaClient, UserRole } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
- const prisma = new PrismaClient();
+const prisma = new PrismaClient();
 
- export const createUser = async (userData: any) => {
+export const createUser = async (userData: {
+  name?: string;
+  email: string;
+  password: string;
+}) => {
   // Criptografa a senha antes de salvar no banco
   const hashedPassword = await bcrypt.hash(userData.password, 10);
 
@@ -12,14 +16,17 @@
     data: {
       name: userData.name,
       email: userData.email,
-      password: hashedPassword, 
-      role: UserRole.CLIENT, 
+      password: hashedPassword,
+      role: UserRole.CLIENT,
     },
   });
   return user;
 };
 
-export const loginUser = async (loginData: any) => {
+export const loginUser = async (loginData: {
+  email: string;
+  password: string;
+}) => {
   // 1. Encontra o usuário pelo email
   const user = await prisma.user.findUnique({
     where: { email: loginData.email },
@@ -29,16 +36,19 @@ export const loginUser = async (loginData: any) => {
   }
 
   // 2. Compara a senha enviada com a senha criptografada no banco
-  const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
+  const isPasswordValid = await bcrypt.compare(
+    loginData.password,
+    user.password,
+  );
   if (!isPasswordValid) {
     throw new Error('Credenciais inválidas');
   }
 
   // 3. Se tudo estiver correto, gera o Token JWT
   const token = jwt.sign(
-    { userId: user.id, role: user.role }, 
-    process.env.JWT_SECRET!,               
-    { expiresIn: '8h' }                   
+    { userId: user.id, role: user.role },
+    process.env.JWT_SECRET!,
+    { expiresIn: '8h' },
   );
 
   return { token };

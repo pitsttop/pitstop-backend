@@ -97,11 +97,16 @@ describe('User Service - Unit Tests', () => {
 
     // 3. ASSERÇÃO (Assert)
     expect(result).toEqual({ token: mockToken });
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: loginData.email } });
-    expect(bcrypt.compare).toHaveBeenCalledWith(loginData.password, hashedPassword);
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { email: loginData.email },
+    });
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      loginData.password,
+      hashedPassword,
+    );
     expect(jwt.sign).toHaveBeenCalledTimes(1);
   });
-   it('deve lançar um erro se o usuário com o email não for encontrado', async () => {
+  it('deve lançar um erro se o usuário com o email não for encontrado', async () => {
     // 1. ARRANJO (Arrange)
     const loginData = { email: 'inexistente@email.com', password: 'senha123' };
     // Ensinamos o dublê a retornar 'null', como se não tivesse encontrado o usuário
@@ -129,7 +134,9 @@ describe('User Service - Unit Tests', () => {
 
     // 2. AÇÃO E ASSERÇÃO (Act & Assert)
     await expect(loginUser(loginData)).rejects.toThrow('Credenciais inválidas');
-    expect(bcrypt.compare).toHaveBeenCalledWith(loginData.password, mockUser.password);
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      loginData.password,
+      mockUser.password,
+    );
   });
-
 });

@@ -16,6 +16,12 @@ jest.mock('@prisma/client', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    client: {
+      findUnique: jest.fn(),
+    },
+    vehicle: {
+      findUnique: jest.fn(),
+    },
   };
   return {
     __esModule: true,
@@ -38,12 +44,24 @@ describe('Order Service - Unit Tests', () => {
       clientId: 'c1',
       vehicleId: 'v1',
     };
+    // Mock client and vehicle existence checks used by createOrder
+    (prisma.client.findUnique as jest.Mock).mockResolvedValue({ id: orderData.clientId });
+    (prisma.vehicle.findUnique as jest.Mock).mockResolvedValue({ id: orderData.vehicleId, ownerId: orderData.clientId });
+
+    // The service creates the order using `connect` for relations and includes client/vehicle
     (prisma.order.create as jest.Mock).mockResolvedValue(orderData);
 
     const result = await createOrder(orderData);
 
     expect(result).toEqual(orderData);
-    expect(prisma.order.create).toHaveBeenCalledWith({ data: orderData });
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: {
+        description: orderData.description,
+        client: { connect: { id: orderData.clientId } },
+        vehicle: { connect: { id: orderData.vehicleId } },
+      },
+      include: { client: true, vehicle: true },
+    });
     expect(prisma.order.create).toHaveBeenCalledTimes(1);
   });
 

@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 
-
 interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
@@ -21,18 +20,21 @@ export const authorize = (roles: UserRole[]) => {
     const [, token] = authHeader.split(' ');
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string, role: UserRole };
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+        userId: string;
+        role: UserRole;
+      };
 
-      
       if (!roles.includes(decoded.role)) {
-        return res.status(403).json({ error: 'Acesso negado: permissão insuficiente.' }); // 403 Forbidden
+        return res
+          .status(403)
+          .json({ error: 'Acesso negado: permissão insuficiente.' }); // 403 Forbidden
       }
 
-      
       req.user = decoded;
 
       return next();
-    } catch (err) {
+    } catch {
       return res.status(401).json({ error: 'Token inválido.' });
     }
   };
