@@ -40,7 +40,8 @@ app.get('/', (req, res) => {
 app.get('/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), (req, res) => {
   // req.user é definido pelo middleware de autorização
   const authUser = (req as any).user;
-  if (!authUser) return res.status(401).json({ error: 'Usuário não autenticado.' });
+  if (!authUser)
+    return res.status(401).json({ error: 'Usuário não autenticado.' });
 
   res.json(authUser);
 });
@@ -52,14 +53,21 @@ app.get('/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), (req, res) => {
 app.use('/dashboard', authorize([UserRole.ADMIN]), dashboardRoutes);
 
 // Ex: Admins e Clientes podem ver clientes, veiculos e ordens
-app.use('/clientes', authorize([UserRole.ADMIN, UserRole.CLIENT]), clientRoutes);
-app.use('/veiculos', authorize([UserRole.ADMIN, UserRole.CLIENT]), vehicleRoutes);
+app.use(
+  '/clientes',
+  authorize([UserRole.ADMIN, UserRole.CLIENT]),
+  clientRoutes,
+);
+app.use(
+  '/veiculos',
+  authorize([UserRole.ADMIN, UserRole.CLIENT]),
+  vehicleRoutes,
+);
 app.use('/ordens', authorize([UserRole.ADMIN, UserRole.CLIENT]), orderRoutes);
 
 // Ex: Apenas ADMINS podem gerenciar peças e serviços
 app.use('/pecas', authorize([UserRole.ADMIN]), partRoutes);
 app.use('/servicos', authorize([UserRole.ADMIN]), serviceRoutes);
-
 
 app.listen(port, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${port}`);

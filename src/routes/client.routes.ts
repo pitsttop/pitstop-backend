@@ -58,16 +58,28 @@ router.get(
       const { id } = req.params;
 
       // Se o usuário for CLIENT, só pode acessar seus próprios dados
-      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
-      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
-        return res.status(403).json({ error: 'Acesso negado: só é possível ver seus próprios veículos.' });
+      const authUser = (req as any).user as
+        | { userId: string; role: UserRole }
+        | undefined;
+      if (
+        authUser &&
+        authUser.role === UserRole.CLIENT &&
+        authUser.userId !== id
+      ) {
+        return res
+          .status(403)
+          .json({
+            error: 'Acesso negado: só é possível ver seus próprios veículos.',
+          });
       }
 
       const vehicles = await vehicleService.listVehiclesByClient(id);
       res.json(vehicles);
     } catch (_error) {
       console.error('Erro ao buscar veículos do cliente:', _error);
-      res.status(500).json({ error: 'Não foi possível buscar os veículos do cliente.' });
+      res
+        .status(500)
+        .json({ error: 'Não foi possível buscar os veículos do cliente.' });
     }
   },
 );
@@ -81,16 +93,28 @@ router.get(
       const { id } = req.params;
 
       // Se o usuário for CLIENT, só pode acessar suas próprias ordens
-      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
-      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
-        return res.status(403).json({ error: 'Acesso negado: só é possível ver suas próprias ordens.' });
+      const authUser = (req as any).user as
+        | { userId: string; role: UserRole }
+        | undefined;
+      if (
+        authUser &&
+        authUser.role === UserRole.CLIENT &&
+        authUser.userId !== id
+      ) {
+        return res
+          .status(403)
+          .json({
+            error: 'Acesso negado: só é possível ver suas próprias ordens.',
+          });
       }
 
       const orders = await orderService.listOrders({ clientId: id });
       res.json(orders);
     } catch (_error) {
       console.error('Erro ao buscar ordens do cliente:', _error);
-      res.status(500).json({ error: 'Não foi possível buscar as ordens do cliente.' });
+      res
+        .status(500)
+        .json({ error: 'Não foi possível buscar as ordens do cliente.' });
     }
   },
 );
