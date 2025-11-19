@@ -56,3 +56,4 @@ export const deleteClient = async (id: string) => {
     where: { id: id },
   });
 };
+

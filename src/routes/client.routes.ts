@@ -8,6 +8,8 @@ import {
 } from '../services/client.services';
 import { authorize } from '../middlewares/auth.middleware';
 import { UserRole } from '@prisma/client';
+import * as vehicleService from '../services/vehicle.services';
+import * as orderService from '../services/order.services';
 
 const router = Router();
 
@@ -43,6 +45,52 @@ router.get(
     } catch (_error) {
       console.error('Erro ao buscar cliente por ID:', _error);
       res.status(500).json({ error: 'Não foi possível buscar o cliente.' });
+    }
+  },
+);
+
+// Rota para listar veículos de um cliente
+router.get(
+  '/:id/veiculos',
+  authorize([UserRole.ADMIN, UserRole.CLIENT]),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      // Se o usuário for CLIENT, só pode acessar seus próprios dados
+      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
+      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
+        return res.status(403).json({ error: 'Acesso negado: só é possível ver seus próprios veículos.' });
+      }
+
+      const vehicles = await vehicleService.listVehiclesByClient(id);
+      res.json(vehicles);
+    } catch (_error) {
+      console.error('Erro ao buscar veículos do cliente:', _error);
+      res.status(500).json({ error: 'Não foi possível buscar os veículos do cliente.' });
+    }
+  },
+);
+
+// Rota para listar ordens de serviço de um cliente
+router.get(
+  '/:id/ordens',
+  authorize([UserRole.ADMIN, UserRole.CLIENT]),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      // Se o usuário for CLIENT, só pode acessar suas próprias ordens
+      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
+      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
+        return res.status(403).json({ error: 'Acesso negado: só é possível ver suas próprias ordens.' });
+      }
+
+      const orders = await orderService.listOrders({ clientId: id });
+      res.json(orders);
+    } catch (_error) {
+      console.error('Erro ao buscar ordens do cliente:', _error);
+      res.status(500).json({ error: 'Não foi possível buscar as ordens do cliente.' });
     }
   },
 );
