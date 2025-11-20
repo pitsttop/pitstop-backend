@@ -17,9 +17,9 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=mysecretpassword
-      - POSTGRES_DB=oficina_db_test 
+      - POSTGRES_DB=oficina_db_test
     ports:
-      - "5434:5432" 
+      - '5434:5432'
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
 
@@ -38,8 +38,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: sh -c "npx prisma generate && npm run dev"
-
+    command: sh -c "npx prisma migrate dev && npm run dev"
   auth-api:
     build:
       context: ../pitstop-auth
@@ -47,14 +46,14 @@ services:
     ports:
       - '3002:3002'
     environment:
-      DATABASE_URL: 'postgresql://postgres:mysecretpassword@db:5432/oficina_db?schema=public'
+      DATABASE_URL: 'postgresql://postgres:mysecretpassword@db:5432/oficina_db?schema=auth'
       JWT_SECRET: 'SUA_SENHA_SECRETA_SUPER_LONGA_E_ALEATORIA_AQUI_12345'
     depends_on:
       - db
     volumes:
       - ../pitstop-auth:/app
       - /app/node_modules
-    command: sh -c "npx prisma generate && npm run dev"
+    command: sh -c "npx prisma migrate dev && npm run dev"
 
 volumes:
   postgres_data:

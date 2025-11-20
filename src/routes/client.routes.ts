@@ -5,6 +5,7 @@ import {
   findClientById,
   updateClient,
   deleteClient,
+  findClientByUserId, // <--- IMPORTANTE: Importar essa função nova
 } from '../services/client.services';
 import { authorize } from '../middlewares/auth.middleware';
 import { UserRole } from '@prisma/client';
@@ -13,13 +14,13 @@ import * as orderService from '../services/order.services';
 
 const router = Router();
 
+// Rota para listar todos os clientes (Apenas Admin)
 router.get(
   '/',
   authorize([UserRole.ADMIN]),
   async (req: Request, res: Response) => {
     try {
       const searchTerm = req.query.search as string | undefined;
-
       const clientes = await listClients(searchTerm);
       res.json(clientes);
     } catch {
@@ -28,13 +29,13 @@ router.get(
   },
 );
 
+// Rota para buscar um cliente específico pelo ID (do Cliente)
 router.get(
   '/:id',
   authorize([UserRole.ADMIN]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-
       const cliente = await findClientById(id);
 
       if (!cliente) {
@@ -49,83 +50,86 @@ router.get(
   },
 );
 
-// Rota para listar veículos de um cliente
+// --- ROTA CORRIGIDA: Listar veículos (Usa o ID do Usuário na URL) ---
 router.get(
   '/:id/veiculos',
   authorize([UserRole.ADMIN, UserRole.CLIENT]),
   async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // Aqui 'id' é o userId (do login)
 
-      // Se o usuário for CLIENT, só pode acessar seus próprios dados
-      const authUser = (req as any).user as
-        | { userId: string; role: UserRole }
-        | undefined;
-      if (
-        authUser &&
-        authUser.role === UserRole.CLIENT &&
-        authUser.userId !== id
-      ) {
-        return res
-          .status(403)
-          .json({
-            error: 'Acesso negado: só é possível ver seus próprios veículos.',
-          });
+      // Validação de segurança
+      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
+      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
+        return res.status(403).json({ error: 'Acesso negado.' });
       }
 
-      const vehicles = await vehicleService.listVehiclesByClient(id);
+      // 1. Traduz o ID do Usuário para o ID do Cliente
+      const client = await findClientByUserId(id);
+
+      if (!client) {
+        return res.status(404).json({ error: 'Perfil de cliente não encontrado.' });
+      }
+
+      // 2. Busca os veículos usando o ID REAL do Cliente
+      const vehicles = await vehicleService.listVehiclesByClient(client.id);
       res.json(vehicles);
     } catch (_error) {
-      console.error('Erro ao buscar veículos do cliente:', _error);
-      res
-        .status(500)
-        .json({ error: 'Não foi possível buscar os veículos do cliente.' });
+      console.error('Erro ao buscar veículos:', _error);
+      res.status(500).json({ error: 'Erro interno.' });
     }
   },
 );
 
-// Rota para listar ordens de serviço de um cliente
+// --- ROTA CORRIGIDA: Listar ordens (Usa o ID do Usuário na URL) ---
 router.get(
   '/:id/ordens',
   authorize([UserRole.ADMIN, UserRole.CLIENT]),
   async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { id } = req.params; // Aqui 'id' é o userId
 
-      // Se o usuário for CLIENT, só pode acessar suas próprias ordens
-      const authUser = (req as any).user as
-        | { userId: string; role: UserRole }
-        | undefined;
-      if (
-        authUser &&
-        authUser.role === UserRole.CLIENT &&
-        authUser.userId !== id
-      ) {
-        return res
-          .status(403)
-          .json({
-            error: 'Acesso negado: só é possível ver suas próprias ordens.',
-          });
+      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
+      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
+        return res.status(403).json({ error: 'Acesso negado.' });
       }
 
-      const orders = await orderService.listOrders({ clientId: id });
+      // 1. Traduz o ID do Usuário para o ID do Cliente
+      const client = await findClientByUserId(id);
+
+      if (!client) {
+        return res.status(404).json({ error: 'Perfil de cliente não encontrado.' });
+      }
+
+      // 2. Busca as ordens usando o ID REAL do Cliente
+      const orders = await orderService.listOrders({ clientId: client.id });
       res.json(orders);
     } catch (_error) {
-      console.error('Erro ao buscar ordens do cliente:', _error);
-      res
-        .status(500)
-        .json({ error: 'Não foi possível buscar as ordens do cliente.' });
+      console.error('Erro ao buscar ordens:', _error);
+      res.status(500).json({ error: 'Erro interno.' });
     }
   },
 );
 
+// --- ROTA CORRIGIDA: Criar Cliente (Recebe o userId do token) ---
+// Mudei para permitir CLIENT também, pois é o próprio usuário se cadastrando
 router.post(
   '/',
-  authorize([UserRole.ADMIN]),
+  authorize([UserRole.ADMIN, UserRole.CLIENT]), 
   async (req: Request, res: Response) => {
     try {
       const novoClienteData = req.body;
-      const cliente = await createClient(novoClienteData);
+      
+      // Pega o ID do usuário que está logado (do Token)
+      const authUser = (req as any).user;
+
+      if (!authUser || !authUser.userId) {
+        return res.status(401).json({ error: 'Token inválido ou sem ID.' });
+      }
+
+      // Passa os dados E o userId para o serviço
+      const cliente = await createClient(novoClienteData, authUser.userId);
+      
       res.status(201).json(cliente);
     } catch (_error) {
       console.error('Erro ao criar cliente:', _error);

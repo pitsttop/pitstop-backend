@@ -1,75 +1,61 @@
 import { Router, Request, Response } from 'express';
 import { authorize } from '../middlewares/auth.middleware';
 import { UserRole } from '@prisma/client';
-import * as serviceService from '../services/service.services';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const router = Router();
 
-// Apenas Admins podem gerenciar o catálogo de serviços.
-
-router.use(authorize([UserRole.ADMIN]));
-
-// Rota para criar um novo serviço (POST /servicos)
-router.post('/', async (req: Request, res: Response) => {
+// 1. LISTAR SERVIÇOS: Liberado para Admin e Clientes
+// (Assim o agendamento consegue puxar a lista)
+router.get('/', authorize([UserRole.ADMIN, UserRole.CLIENT]), async (req: Request, res: Response) => {
   try {
-    const service = await serviceService.createService(req.body);
-    res.status(201).json(service);
-  } catch (_error) {
-    console.error('Erro ao criar o serviço:', _error);
-    res.status(500).json({ error: 'Não foi possível criar o serviço.' });
-  }
-});
-
-// Rota para listar todos os serviços (GET /servicos)
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const services = await serviceService.listServices();
+    const services = await prisma.service.findMany({
+      orderBy: { name: 'asc' }
+    });
     res.json(services);
-  } catch (_error) {
-    console.error('Erro ao listar os serviços:', _error);
-    res.status(500).json({ error: 'Não foi possível listar os serviços.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar serviços.' });
   }
 });
 
-// Rota para buscar um serviço por ID (GET /servicos/:id)
-router.get('/:id', async (req: Request, res: Response) => {
+// 2. CRIAR SERVIÇO: Apenas Admin
+router.post('/', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
-    const service = await serviceService.findServiceById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ error: 'Serviço não encontrado.' });
-    }
+    const { name, description, price } = req.body;
+    const service = await prisma.service.create({
+      data: { name, description, price: Number(price) }
+    });
+    res.status(201).json(service);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao criar serviço.' });
+  }
+});
+
+// 3. ATUALIZAR: Apenas Admin
+router.put('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    if (data.price) data.price = Number(data.price);
+    
+    const service = await prisma.service.update({
+      where: { id },
+      data
+    });
     res.json(service);
-  } catch (_error) {
-    console.error('Erro ao buscar o serviço:', _error);
-    res.status(500).json({ error: 'Não foi possível buscar o serviço.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao atualizar serviço.' });
   }
 });
 
-// Rota para atualizar um serviço (PUT /servicos/:id)
-router.put('/:id', async (req: Request, res: Response) => {
+// 4. DELETAR: Apenas Admin
+router.delete('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
-    const service = await serviceService.updateService(req.params.id, req.body);
-    res.json(service);
-  } catch (_error) {
-    if ((_error as { code?: string }).code === 'P2025') {
-      return res.status(404).json({ error: 'Serviço não encontrado.' });
-    }
-    console.error('Erro ao atualizar o serviço:', _error);
-    res.status(500).json({ error: 'Não foi possível atualizar o serviço.' });
-  }
-});
-
-// Rota para deletar um serviço (DELETE /servicos/:id)
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    await serviceService.deleteService(req.params.id);
+    await prisma.service.delete({ where: { id: req.params.id } });
     res.status(204).send();
-  } catch (_error) {
-    if ((_error as { code?: string }).code === 'P2025') {
-      return res.status(404).json({ error: 'Serviço não encontrado.' });
-    }
-    console.error('Erro ao deletar o serviço:', _error);
-    res.status(500).json({ error: 'Não foi possível deletar o serviço.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao deletar serviço.' });
   }
 });
 

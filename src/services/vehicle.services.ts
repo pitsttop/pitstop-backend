@@ -1,26 +1,36 @@
-
 import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Definimos exatamente o que esperamos receber
 type CreateVehicleDTO = {
   plate: string;
   model: string;
-  brand?: string;
-  year?: number;
-  color?: string | null;
-  ownerId: string;
+  brand: string;
+  year: number;
+  color?: string;
+  ownerId: string; // OBRIGATÓRIO: ID do Cliente (da tabela Client)
 };
 
-export const createVehicle = async (vehicleData: CreateVehicleDTO) => {
-  // Pass-through the DTO to Prisma. Cast to satisfy the generated Prisma types in TS.
+export const createVehicle = async (data: CreateVehicleDTO) => {
+  // Mapeamos explicitamente para evitar erros de tipo
   return await prisma.vehicle.create({
-    data: vehicleData as unknown as Prisma.VehicleCreateInput,
+    data: {
+      plate: data.plate,
+      model: data.model,
+      brand: data.brand,
+      year: data.year,
+      color: data.color || null,
+      // O Prisma conecta automaticamente se o campo userId/ownerId for uma String na tabela
+      ownerId: data.ownerId, 
+    },
   });
 };
 
 export const listAllVehicles = async () => {
-  return await prisma.vehicle.findMany();
+  return await prisma.vehicle.findMany({
+    include: { owner: true } // Traz os dados do dono junto (opcional)
+  });
 };
 
 export const findVehicleById = async (id: string) => {

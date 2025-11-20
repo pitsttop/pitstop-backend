@@ -66,9 +66,9 @@ app.use(
 app.use('/ordens', authorize([UserRole.ADMIN, UserRole.CLIENT]), orderRoutes);
 
 // Ex: Apenas ADMINS podem gerenciar peças e serviços
-app.use('/pecas', authorize([UserRole.ADMIN]), partRoutes);
-app.use('/servicos', authorize([UserRole.ADMIN]), serviceRoutes);
+app.use('/pecas',partRoutes);
+app.use('/servicos', serviceRoutes);
 
-app.listen(port, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+app.listen(port as number, '0.0.0.0', () => {
+  console.log(`🚀 Servidor rodando em http://0.0.0.0:${port}`);
 });

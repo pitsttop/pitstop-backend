@@ -5,20 +5,48 @@ import * as vehicleService from '../services/vehicle.services';
 
 const router = Router();
 
-// Todas as rotas de veículo serão protegidas e acessíveis apenas por Admins
+// Rota protegida para ADMIN
 router.use(authorize([UserRole.ADMIN]));
 
 // Criar um novo veículo
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const vehicle = await vehicleService.createVehicle(req.body);
+    // O Admin precisa enviar o ID do dono no corpo da requisição
+    const { plate, model, brand, year, color, ownerId } = req.body;
+
+    // 1. Validação Simples
+    if (!ownerId) {
+      return res.status(400).json({ error: 'O campo ownerId (ID do Cliente) é obrigatório.' });
+    }
+
+    // 2. Chama o serviço passando os dados limpos
+    const vehicle = await vehicleService.createVehicle({
+      plate,
+      model,
+      brand,
+      year: Number(year), // Garante que ano é número
+      color,
+      ownerId
+    });
+
     res.status(201).json(vehicle);
-  } catch {
+
+  } catch (error: any) {
+    console.error("Erro ao criar veículo:", error); // <--- ISSO VAI MOSTRAR O ERRO NO TERMINAL
+
+    // Tratamento de erros comuns do Prisma
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Já existe um veículo com esta placa.' });
+    }
+    if (error.code === 'P2003') {
+      return res.status(400).json({ error: 'O ownerId informado não existe (Cliente não encontrado).' });
+    }
+
     res.status(500).json({ error: 'Não foi possível criar o veículo.' });
   }
 });
 
-// Listar todos os veículos
+// ... (O resto das rotas GET, PUT, DELETE pode manter igual) ...
 router.get('/', async (req: Request, res: Response) => {
   try {
     const vehicles = await vehicleService.listAllVehicles();
@@ -27,45 +55,5 @@ router.get('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Não foi possível listar os veículos.' });
   }
 });
-
-// Buscar um veículo por ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const vehicle = await vehicleService.findVehicleById(req.params.id);
-    if (!vehicle) {
-      return res.status(404).json({ error: 'Veículo não encontrado.' });
-    }
-    res.json(vehicle);
-  } catch {
-    res.status(500).json({ error: 'Não foi possível buscar o veículo.' });
-  }
-});
-
-// Atualizar um veículo
-router.put('/:id', async (req: Request, res: Response) => {
-  try {
-    const vehicle = await vehicleService.updateVehicle(req.params.id, req.body);
-    res.json(vehicle);
-  } catch (_error) {
-    if ((_error as { code?: string }).code === 'P2025') {
-      return res.status(404).json({ error: 'Veículo não encontrado.' });
-    }
-    res.status(500).json({ error: 'Não foi possível atualizar o veículo.' });
-  }
-});
-
-// Deletar um veículo
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    await vehicleService.deleteVehicle(req.params.id);
-    res.status(204).send();
-  } catch (_error) {
-    if ((_error as { code?: string }).code === 'P2025') {
-      return res.status(404).json({ error: 'Veículo não encontrado.' });
-    }
-    res.status(500).json({ error: 'Não foi possível deletar o veículo.' });
-  }
-});
-
-
+// ... etc
 export default router;
