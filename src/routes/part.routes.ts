@@ -5,22 +5,11 @@ import * as partService from '../services/part.services';
 
 const router = Router();
 
-// Apenas Admins podem gerenciar o catálogo de peças.
+// --- MUDANÇA: Removemos o bloqueio global ---
+// Antes: router.use(authorize([UserRole.ADMIN]));
+// Agora as rotas GET são públicas para a Landing Page acessar.
 
-router.use(authorize([UserRole.ADMIN]));
-
-// Rota para criar uma nova peça (POST /pecas)
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const part = await partService.createPart(req.body);
-    res.status(201).json(part);
-  } catch (_error) {
-    console.error('Erro ao criar a peça:', _error);
-    res.status(500).json({ error: 'Não foi possível criar a peça.' });
-  }
-});
-
-// Rota para listar todas as peças (GET /pecas)
+// Rota para listar todas as peças (GET /pecas) - PÚBLICA
 router.get('/', async (req: Request, res: Response) => {
   try {
     const parts = await partService.listParts();
@@ -31,7 +20,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// Rota para buscar uma peça por ID (GET /pecas/:id)
+// Rota para buscar uma peça por ID (GET /pecas/:id) - PÚBLICA
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const part = await partService.findPartById(req.params.id);
@@ -45,8 +34,21 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// --- ROTAS PROTEGIDAS (Apenas Admin) ---
+
+// Rota para criar uma nova peça (POST /pecas)
+router.post('/', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
+  try {
+    const part = await partService.createPart(req.body);
+    res.status(201).json(part);
+  } catch (_error) {
+    console.error('Erro ao criar a peça:', _error);
+    res.status(500).json({ error: 'Não foi possível criar a peça.' });
+  }
+});
+
 // Rota para atualizar uma peça (PUT /pecas/:id)
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
     const part = await partService.updatePart(req.params.id, req.body);
     res.json(part);
@@ -60,14 +62,24 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Rota para deletar uma peça (DELETE /pecas/:id)
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
     await partService.deletePart(req.params.id);
     res.status(204).send();
   } catch (_error) {
+    // 1. TRATAMENTO P2003: Item em uso (Foreign Key Constraint)
+    if ((_error as { code?: string }).code === 'P2003') {
+        return res.status(400).json({
+            error: 'Não é possível excluir esta peça pois ela é utilizada em Ordens de Serviço.'
+        });
+    }
+
+    // 2. P2025 (Record Not Found) - Já estava correto
     if ((_error as { code?: string }).code === 'P2025') {
       return res.status(404).json({ error: 'Peça não encontrada.' });
     }
+    
+    // 3. Erro Genérico (Qualquer outro erro inesperado)
     console.error('Erro ao deletar a peça:', _error);
     res.status(500).json({ error: 'Não foi possível deletar a peça.' });
   }

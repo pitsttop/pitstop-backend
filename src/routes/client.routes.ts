@@ -8,12 +8,12 @@ import {
   findClientByUserId, // <--- IMPORTANTE: Importar essa função nova
 } from '../services/client.services';
 import { authorize } from '../middlewares/auth.middleware';
-import { UserRole } from '@prisma/client';
+import { UserRole, PrismaClient } from '@prisma/client';
 import * as vehicleService from '../services/vehicle.services';
 import * as orderService from '../services/order.services';
 
 const router = Router();
-
+const prisma = new PrismaClient();
 // Rota para listar todos os clientes (Apenas Admin)
 router.get(
   '/',
@@ -82,34 +82,44 @@ router.get(
 );
 
 // --- ROTA CORRIGIDA: Listar ordens (Usa o ID do Usuário na URL) ---
-router.get(
-  '/:id/ordens',
-  authorize([UserRole.ADMIN, UserRole.CLIENT]),
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params; // Aqui 'id' é o userId
+router.get('/me/ordens', authorize([UserRole.CLIENT]), async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).user;
+    const userId = authUser?.userId ?? authUser?.id;
 
-      const authUser = (req as any).user as { userId: string; role: UserRole } | undefined;
-      if (authUser && authUser.role === UserRole.CLIENT && authUser.userId !== id) {
-        return res.status(403).json({ error: 'Acesso negado.' });
-      }
+if (!userId) {
+  return res.status(401).json({ error: 'Token sem identificador de usuário.' });
+}
 
-      // 1. Traduz o ID do Usuário para o ID do Cliente
-      const client = await findClientByUserId(id);
+const clientRecord = await prisma.client.findUnique({
+  where: { userId },
+  select: { id: true },
+});
 
-      if (!client) {
-        return res.status(404).json({ error: 'Perfil de cliente não encontrado.' });
-      }
-
-      // 2. Busca as ordens usando o ID REAL do Cliente
-      const orders = await orderService.listOrders({ clientId: client.id });
-      res.json(orders);
-    } catch (_error) {
-      console.error('Erro ao buscar ordens:', _error);
-      res.status(500).json({ error: 'Erro interno.' });
+    if (!clientRecord) {
+      console.error(`Cliente não encontrado para userId: ${userId}`);
+      return res.json([]);
     }
-  },
-);
+
+    const orders = await prisma.order.findMany({
+      where: { clientId: clientRecord.id },
+      orderBy: { startDate: 'desc' },
+      include: {
+        vehicle: { select: { model: true, plate: true } },
+        servicesPerformed: {
+          include: { service: { select: { name: true } } },
+        },
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Erro ao buscar ordens do cliente:', error);
+    res
+      .status(500)
+      .json({ error: 'Não foi possível buscar os serviços recentes.' });
+  }
+});
 
 // --- ROTA CORRIGIDA: Criar Cliente (Recebe o userId do token) ---
 // Mudei para permitir CLIENT também, pois é o próprio usuário se cadastrando

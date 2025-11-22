@@ -6,9 +6,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const router = Router();
 
-// 1. LISTAR SERVIÇOS: Liberado para Admin e Clientes
-// (Assim o agendamento consegue puxar a lista)
-router.get('/', authorize([UserRole.ADMIN, UserRole.CLIENT]), async (req: Request, res: Response) => {
+// 1. LISTAR SERVIÇOS: AGORA É PÚBLICO
+// Removemos o 'authorize' para que a calculadora da Landing Page funcione
+router.get('/', async (req: Request, res: Response) => {
   try {
     const services = await prisma.service.findMany({
       orderBy: { name: 'asc' }
@@ -19,7 +19,7 @@ router.get('/', authorize([UserRole.ADMIN, UserRole.CLIENT]), async (req: Reques
   }
 });
 
-// 2. CRIAR SERVIÇO: Apenas Admin
+// 2. CRIAR SERVIÇO: Continua protegido (Apenas Admin)
 router.post('/', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
     const { name, description, price } = req.body;
@@ -49,14 +49,29 @@ router.put('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Respon
   }
 });
 
-// 4. DELETAR: Apenas Admin
+/// 4. DELETAR: Apenas Admin
 router.delete('/:id', authorize([UserRole.ADMIN]), async (req: Request, res: Response) => {
   try {
     await prisma.service.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao deletar serviço.' });
+    // TRATAMENTO DE ERRO ESPECÍFICO:
+    
+    // P2003: Violação de Foreign Key (O serviço está sendo usado em uma ordem)
+    if ((error as any).code === 'P2003') {
+      return res.status(400).json({ 
+        error: 'Não é possível excluir este serviço pois ele já foi utilizado em Ordens de Serviço.' 
+      });
+    }
+
+    // P2025: Registro não encontrado (Caso tente deletar algo que não existe)
+    if ((error as any).code === 'P2025') {
+      return res.status(404).json({ error: 'Serviço não encontrado.' });
+    }
+
+    // Erro Genérico (Logar no console para você saber o que foi)
+    console.error('Erro ao deletar serviço:', error);
+    res.status(500).json({ error: 'Erro interno ao deletar serviço.' });
   }
 });
-
 export default router;

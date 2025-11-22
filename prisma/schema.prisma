@@ -11,19 +11,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
-
-
 model Client {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  phone     String    @unique
-  email     String?   @unique
+  phone     String   @unique
+  email     String?  @unique
   address   String?
-  createdAt DateTime  @default(now())
-  userId    String    @unique
-  
+  createdAt DateTime @default(now())
+  userId    String   @unique
+   
   vehicles  Vehicle[]
   orders    Order[]
 }
@@ -37,36 +33,33 @@ model Vehicle {
   color     String?
   createdAt DateTime @default(now())
 
-  
   owner     Client   @relation(fields: [ownerId], references: [id])
   ownerId   String
   orders    Order[]
 }
 
 model Order {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   description String
-  status      OrderStatus @default(OPEN) // Using an Enum for status is safer
+  status      OrderStatus @default(OPEN)
   totalValue  Float?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  number       String    @unique @default(cuid()) 
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  number      String      @unique @default(cuid()) 
   observations String?
-  startDate    DateTime  @default(now()) 
+  startDate    DateTime   @default(now()) 
   endDate      DateTime?
 
-  
-  client      Client     @relation(fields: [clientId], references: [id])
+  client      Client      @relation(fields: [clientId], references: [id])
   clientId    String
-  vehicle     Vehicle    @relation(fields: [vehicleId], references: [id])
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
   vehicleId   String
 
-  
+  // Quando a Ordem for deletada, o Prisma vai olhar para essas tabelas abaixo
+  // para ver o comportamento de cascata configurado nelas.
   partsUsed   PartUsage[]
   servicesPerformed ServiceUsage[]
 }
-
-
 
 model Part {
   id          String   @id @default(cuid())
@@ -74,8 +67,7 @@ model Part {
   description String?
   price       Float
   stock       Int      @default(0)
-  
-  
+   
   orders      PartUsage[]
 }
 
@@ -84,20 +76,21 @@ model Service {
   name        String   @unique
   description String?
   price       Float
-  
-  
+   
   orders      ServiceUsage[]
 }
 
-
-
+// --- MODELOS DE RELACIONAMENTO (Onde a mágica acontece) ---
 
 model PartUsage {
   id        String @id @default(cuid())
   quantity  Int    @default(1)
-  
-  order     Order  @relation(fields: [orderId], references: [id])
+   
+  // ALTERADO: onDelete: Cascade adicionado
+  // Se a Order sumir, este registro de uso some junto.
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
+  
   part      Part   @relation(fields: [partId], references: [id])
   partId    String
 
@@ -107,15 +100,16 @@ model PartUsage {
 model ServiceUsage {
   id        String @id @default(cuid())
 
-  order     Order   @relation(fields: [orderId], references: [id])
+  // ALTERADO: onDelete: Cascade adicionado
+  // Se a Order sumir, este registro de uso some junto.
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
+  
   service   Service @relation(fields: [serviceId], references: [id])
   serviceId String
 
   @@unique([orderId, serviceId]) 
 }
-
-
 
 enum UserRole {
   ADMIN

@@ -1,4 +1,4 @@
-import { PrismaClient, OrderStatus } from '@prisma/client';
+import { PrismaClient, OrderStatus, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -8,6 +8,27 @@ interface OrderFilters {
   clientId?: string;
   vehicleId?: string;
 }
+
+export const listOrdersByClient = async (clientId: string) => {
+  return await prisma.order.findMany({
+    where: { 
+      clientId: clientId 
+    },
+    include: {
+      vehicle: true, // Dados do carro
+      client: true,
+      servicesPerformed: {
+        include: { service: true } // Nome e preço do serviço
+      },
+      partsUsed: {
+        include: { part: true } // Nome e preço da peça
+      }
+    },
+    orderBy: {
+      createdAt: 'desc' // Mais recentes primeiro
+    }
+  });
+};
 
 // Cria uma nova Ordem de Serviço
 export const createOrder = async (orderData: {
@@ -80,10 +101,80 @@ export const findOrderById = async (id: string) => {
 };
 
 // Atualiza o status de uma Ordem de Serviço
-export const updateOrderStatus = async (id: string, status: OrderStatus) => {
-  return await prisma.order.update({
-    where: { id: id },
-    data: { status: status },
+export const updateOrderStatus = async (
+  id: string,
+  props: { status: string | OrderStatus; endDate?: string; totalValue?: number | null }
+) => {
+  const status = props.status as OrderStatus;
+
+  // Se ainda não temos o total calculado, ou se preferir garantir sempre,
+  // buscamos a ordem completa e calculamos com base nas relações.
+  let computedTotal = props.totalValue ?? null;
+  if (status === OrderStatus.FINISHED) {
+    const ordemCompleta = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        servicesPerformed: { include: { service: true } },
+        partsUsed: { include: { part: true } },
+      },
+    });
+
+    if (!ordemCompleta) {
+      throw new Error('Ordem de serviço não encontrada.');
+    }
+
+    const totalServicos = (ordemCompleta.servicesPerformed || []).reduce(
+      (acc, item) => acc + (item.service?.price ?? 0),
+      0,
+    );
+
+    const totalPecas = (ordemCompleta.partsUsed || []).reduce(
+      (acc, item) => acc + ((item.part?.price ?? 0) * item.quantity),
+      0,
+    );
+
+    computedTotal = totalServicos + totalPecas;
+  }
+
+  const updatePayload: Prisma.OrderUpdateInput = {
+    status,
+    ...(status === OrderStatus.FINISHED
+      ? { endDate: props.endDate ? new Date(props.endDate) : new Date(), totalValue: computedTotal ?? 0 }
+      : props.totalValue !== undefined ? { totalValue: props.totalValue } : {}),
+  };
+
+  return prisma.order.update({
+    where: { id },
+    data: updatePayload,
+    include: {
+      servicesPerformed: { include: { service: true } },
+      partsUsed: { include: { part: true } },
+    },
+  });
+};
+
+// --- FUNÇÃO ADICIONADA: Adicionar Serviço à Ordem ---
+export const addServiceToOrder = async (
+  orderId: string,
+  serviceId: string,
+) => {
+  // Cria uma nova entrada em ServiceUsage (que é a tabela de relacionamento)
+  // O ServiceUsage tem uma chave composta (orderId_serviceId) se o seu schema for assim,
+  // mas o Prisma por padrão usa 'create' e falhará se tentar duplicar um relacionamento @unique
+  return await prisma.serviceUsage.create({
+    data: {
+      orderId: orderId,
+      serviceId: serviceId,
+    },
+  });
+};
+
+// --- FUNÇÃO ADICIONADA: Remover Serviço da Ordem ---
+export const removeServiceFromOrder = async (serviceUsageId: string) => {
+  return await prisma.serviceUsage.delete({
+    where: {
+      id: serviceUsageId,
+    },
   });
 };
 
