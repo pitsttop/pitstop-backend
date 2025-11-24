@@ -12,7 +12,7 @@ describe('E2E - App & Auth', () => {
 
   beforeAll(async () => {
     const context = await setupE2ESuite();
-  createApp = context.createApp!;
+    createApp = context.createApp!;
   });
 
   afterAll(async () => {

@@ -49,7 +49,9 @@ describe('Integração - Rotas de Dashboard', () => {
       .set('Authorization', 'Bearer client-token');
 
     expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: 'Acesso negado: permissão insuficiente.' });
+    expect(response.body).toEqual({
+      error: 'Acesso negado: permissão insuficiente.',
+    });
     expect(getDashboardMetricsMock).not.toHaveBeenCalled();
   });
 });

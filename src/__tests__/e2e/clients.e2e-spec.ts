@@ -41,7 +41,10 @@ describe('E2E - Clientes', () => {
       .send(payload);
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({ name: 'Fulano e2e', phone: '61999999999' });
+    expect(response.body).toMatchObject({
+      name: 'Fulano e2e',
+      phone: '61999999999',
+    });
   });
 
   it('lista clientes para administradores', async () => {

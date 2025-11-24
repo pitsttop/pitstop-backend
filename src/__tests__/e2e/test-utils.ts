@@ -9,7 +9,8 @@ let appFactory: (() => Express) | null = null;
 let migrationsExecuted = false;
 
 const ensureEnv = () => {
-  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
+  process.env.DATABASE_URL =
+    process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
   process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = 'PITSTOP_E2E_FALLBACK_SECRET_123';
@@ -38,8 +39,8 @@ export const setupE2ESuite = async () => {
   }
 
   if (!appFactory) {
-  // @ts-ignore ts-jest resolve módulos sem extensão durante os testes
-  const appModule = await import('../../app');
+    // @ts-ignore ts-jest resolve módulos sem extensão durante os testes
+    const appModule = await import('../../app');
     appFactory = appModule.createApp;
   }
 
@@ -77,16 +78,27 @@ export const teardownE2ESuite = async () => {
 };
 
 export const createAdminToken = () =>
-  jwt.sign({ userId: `admin-${randomUUID()}`, role: UserRole.ADMIN }, process.env.JWT_SECRET!, {
-    expiresIn: '1h',
-  });
+  jwt.sign(
+    { userId: `admin-${randomUUID()}`, role: UserRole.ADMIN },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: '1h',
+    },
+  );
 
 export const createClientToken = () =>
-  jwt.sign({ userId: `client-${randomUUID()}`, role: UserRole.CLIENT }, process.env.JWT_SECRET!, {
-    expiresIn: '1h',
-  });
+  jwt.sign(
+    { userId: `client-${randomUUID()}`, role: UserRole.CLIENT },
+    process.env.JWT_SECRET!,
+    {
+      expiresIn: '1h',
+    },
+  );
 
-export const createService = (prisma: PrismaClient, overrides?: { id?: string }) =>
+export const createService = (
+  prisma: PrismaClient,
+  overrides?: { id?: string },
+) =>
   prisma.service.create({
     data: {
       id: overrides?.id,
@@ -96,7 +108,10 @@ export const createService = (prisma: PrismaClient, overrides?: { id?: string })
     },
   });
 
-export const createPart = (prisma: PrismaClient, overrides?: { id?: string; price?: number }) =>
+export const createPart = (
+  prisma: PrismaClient,
+  overrides?: { id?: string; price?: number },
+) =>
   prisma.part.create({
     data: {
       id: overrides?.id,
@@ -129,7 +144,8 @@ export const createVehicle = (
   prisma.vehicle.create({
     data: {
       id: overrides?.id,
-      plate: overrides?.plate ?? `E2E-${Math.floor(Math.random() * 9000 + 1000)}`,
+      plate:
+        overrides?.plate ?? `E2E-${Math.floor(Math.random() * 9000 + 1000)}`,
       model: 'Model E2E',
       brand: 'Brand E2E',
       year: 2024,

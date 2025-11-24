@@ -57,7 +57,9 @@ describe('Integração - Rotas de Ordens', () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(order);
-    expect(createOrderMock).toHaveBeenCalledWith({ description: 'Troca de óleo' });
+    expect(createOrderMock).toHaveBeenCalledWith({
+      description: 'Troca de óleo',
+    });
   });
 
   it('retorna 400 quando criação de ordem falha', async () => {
@@ -94,7 +96,9 @@ describe('Integração - Rotas de Ordens', () => {
       .set('Authorization', 'Bearer client-token');
 
     expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: 'Acesso negado. A listagem total é restrita.' });
+    expect(response.body).toEqual({
+      error: 'Acesso negado. A listagem total é restrita.',
+    });
     expect(listOrdersMock).not.toHaveBeenCalled();
   });
 
@@ -121,7 +125,9 @@ describe('Integração - Rotas de Ordens', () => {
       .set('Authorization', 'Bearer admin-token');
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: 'Ordem de serviço não encontrada.' });
+    expect(response.body).toEqual({
+      error: 'Ordem de serviço não encontrada.',
+    });
   });
 
   it('atualiza status da ordem', async () => {
@@ -153,7 +159,9 @@ describe('Integração - Rotas de Ordens', () => {
       .send({ status: 'FINISHED' });
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: 'Ordem de serviço não encontrada.' });
+    expect(response.body).toEqual({
+      error: 'Ordem de serviço não encontrada.',
+    });
   });
 
   it('adiciona peça à ordem', async () => {
@@ -243,7 +251,9 @@ describe('Integração - Rotas de Ordens', () => {
       .set('Authorization', 'Bearer admin-token');
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ error: 'Ordem de serviço não encontrada.' });
+    expect(response.body).toEqual({
+      error: 'Ordem de serviço não encontrada.',
+    });
   });
 
   it('remove peça vinculada à ordem', async () => {

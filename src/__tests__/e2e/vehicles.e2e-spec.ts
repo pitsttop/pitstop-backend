@@ -43,7 +43,10 @@ describe('E2E - Veículos', () => {
       });
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({ plate: 'E2E-1234', ownerId: client.id });
+    expect(response.body).toMatchObject({
+      plate: 'E2E-1234',
+      ownerId: client.id,
+    });
   });
 
   it('lista veículos cadastrados', async () => {

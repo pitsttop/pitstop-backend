@@ -43,11 +43,17 @@ describe('Integração - Rotas de Serviços', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(services);
-    expect(prismaServiceFindManyMock).toHaveBeenCalledWith({ orderBy: { name: 'asc' } });
+    expect(prismaServiceFindManyMock).toHaveBeenCalledWith({
+      orderBy: { name: 'asc' },
+    });
   });
 
   it('cria serviço apenas para admin', async () => {
-    const payload = { name: 'Balanceamento', description: 'Serviço', price: 180 };
+    const payload = {
+      name: 'Balanceamento',
+      description: 'Serviço',
+      price: 180,
+    };
     const created = { id: 's3', ...payload };
     prismaServiceCreateMock.mockResolvedValueOnce(created);
 
@@ -100,7 +106,9 @@ describe('Integração - Rotas de Serviços', () => {
       .set('Authorization', 'Bearer admin-token');
 
     expect(response.status).toBe(204);
-    expect(prismaServiceDeleteMock).toHaveBeenCalledWith({ where: { id: 's1' } });
+    expect(prismaServiceDeleteMock).toHaveBeenCalledWith({
+      where: { id: 's1' },
+    });
   });
 
   it('retorna 400 ao remover serviço em uso', async () => {
@@ -113,7 +121,8 @@ describe('Integração - Rotas de Serviços', () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
-      error: 'Não é possível excluir este serviço pois ele já foi utilizado em Ordens de Serviço.',
+      error:
+        'Não é possível excluir este serviço pois ele já foi utilizado em Ordens de Serviço.',
     });
   });
 

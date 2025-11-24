@@ -82,7 +82,9 @@ describe('Integração - Rotas de Peças', () => {
       .send({ name: 'Item', price: 50 });
 
     expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: 'Acesso negado: permissão insuficiente.' });
+    expect(response.body).toEqual({
+      error: 'Acesso negado: permissão insuficiente.',
+    });
     expect(createPartMock).not.toHaveBeenCalled();
   });
 
@@ -98,7 +100,9 @@ describe('Integração - Rotas de Peças', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(updated);
-    expect(updatePartMock).toHaveBeenCalledWith('p1', { name: 'Filtro atualizado' });
+    expect(updatePartMock).toHaveBeenCalledWith('p1', {
+      name: 'Filtro atualizado',
+    });
   });
 
   it('retorna 404 ao tentar atualizar peça inexistente', async () => {
@@ -136,7 +140,8 @@ describe('Integração - Rotas de Peças', () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
-      error: 'Não é possível excluir esta peça pois ela é utilizada em Ordens de Serviço.',
+      error:
+        'Não é possível excluir esta peça pois ela é utilizada em Ordens de Serviço.',
     });
   });
 

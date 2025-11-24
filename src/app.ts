@@ -26,7 +26,9 @@ type AuthenticatedRequest = Request & {
 export const createApp = () => {
   const app = express();
 
-  app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
+  app.use(
+    cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+  );
   app.use(morgan('dev'));
   app.use(express.json());
 
@@ -39,18 +41,39 @@ export const createApp = () => {
 
   const handleMeRoute = (req: Request, res: Response) => {
     const authUser = (req as AuthenticatedRequest).user;
-    if (!authUser) return res.status(401).json({ error: 'Usuário não autenticado.' });
+    if (!authUser)
+      return res.status(401).json({ error: 'Usuário não autenticado.' });
     return res.json(authUser);
   };
 
-  app.get('/auth/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), handleMeRoute);
-  app.get('/users/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), handleMeRoute);
-  app.get('/clientes/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), handleMeRoute);
+  app.get(
+    '/auth/me',
+    authorize([UserRole.ADMIN, UserRole.CLIENT]),
+    handleMeRoute,
+  );
+  app.get(
+    '/users/me',
+    authorize([UserRole.ADMIN, UserRole.CLIENT]),
+    handleMeRoute,
+  );
+  app.get(
+    '/clientes/me',
+    authorize([UserRole.ADMIN, UserRole.CLIENT]),
+    handleMeRoute,
+  );
   app.get('/me', authorize([UserRole.ADMIN, UserRole.CLIENT]), handleMeRoute);
 
   app.use('/dashboard', authorize([UserRole.ADMIN]), dashboardRoutes);
-  app.use('/clientes', authorize([UserRole.ADMIN, UserRole.CLIENT]), clientRoutes);
-  app.use('/veiculos', authorize([UserRole.ADMIN, UserRole.CLIENT]), vehicleRoutes);
+  app.use(
+    '/clientes',
+    authorize([UserRole.ADMIN, UserRole.CLIENT]),
+    clientRoutes,
+  );
+  app.use(
+    '/veiculos',
+    authorize([UserRole.ADMIN, UserRole.CLIENT]),
+    vehicleRoutes,
+  );
   app.use('/ordens', authorize([UserRole.ADMIN, UserRole.CLIENT]), orderRoutes);
 
   return app;

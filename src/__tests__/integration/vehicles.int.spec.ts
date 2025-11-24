@@ -54,7 +54,13 @@ describe('Integração - Rotas de Veículos', () => {
     const response = await request(app)
       .post('/veiculos')
       .set('Authorization', 'Bearer admin-token')
-      .send({ plate: 'ABC1234', model: 'Celta', brand: 'GM', year: '2024', ownerId: 'cli-1' });
+      .send({
+        plate: 'ABC1234',
+        model: 'Celta',
+        brand: 'GM',
+        year: '2024',
+        ownerId: 'cli-1',
+      });
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(created);
@@ -76,7 +82,9 @@ describe('Integração - Rotas de Veículos', () => {
       .send({ plate: 'XYZ', model: 'Carro' });
 
     expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: 'O campo ownerId (ID do Cliente) é obrigatório.' });
+    expect(response.body).toEqual({
+      error: 'O campo ownerId (ID do Cliente) é obrigatório.',
+    });
     expect(createVehicleMock).not.toHaveBeenCalled();
   });
 
@@ -87,10 +95,18 @@ describe('Integração - Rotas de Veículos', () => {
     const response = await request(app)
       .post('/veiculos')
       .set('Authorization', 'Bearer admin-token')
-      .send({ plate: 'ABC1234', model: 'Celta', brand: 'GM', year: 2024, ownerId: 'cli-1' });
+      .send({
+        plate: 'ABC1234',
+        model: 'Celta',
+        brand: 'GM',
+        year: 2024,
+        ownerId: 'cli-1',
+      });
 
     expect(response.status).toBe(409);
-    expect(response.body).toEqual({ error: 'Já existe um veículo com esta placa.' });
+    expect(response.body).toEqual({
+      error: 'Já existe um veículo com esta placa.',
+    });
   });
 
   it('retorna 400 quando ownerId não existe', async () => {
@@ -100,10 +116,18 @@ describe('Integração - Rotas de Veículos', () => {
     const response = await request(app)
       .post('/veiculos')
       .set('Authorization', 'Bearer admin-token')
-      .send({ plate: 'ABC1234', model: 'Celta', brand: 'GM', year: 2024, ownerId: 'cli-x' });
+      .send({
+        plate: 'ABC1234',
+        model: 'Celta',
+        brand: 'GM',
+        year: 2024,
+        ownerId: 'cli-x',
+      });
 
     expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: 'O ownerId informado não existe (Cliente não encontrado).' });
+    expect(response.body).toEqual({
+      error: 'O ownerId informado não existe (Cliente não encontrado).',
+    });
   });
 
   it('atualiza veículo com sucesso', async () => {

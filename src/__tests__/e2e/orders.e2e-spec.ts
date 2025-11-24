@@ -53,7 +53,10 @@ describe('E2E - Ordens', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(fetchResponse.status).toBe(200);
-    expect(fetchResponse.body).toMatchObject({ description: 'Revisão completa', clientId: client.id });
+    expect(fetchResponse.body).toMatchObject({
+      description: 'Revisão completa',
+      clientId: client.id,
+    });
   });
 
   it('adiciona peça e serviço em uma ordem existente', async () => {
@@ -80,7 +83,10 @@ describe('E2E - Ordens', () => {
       .send({ partId: part.id, quantity: 2 });
 
     expect(addPartResponse.status).toBe(201);
-    expect(addPartResponse.body).toMatchObject({ orderId: order.id, partId: part.id });
+    expect(addPartResponse.body).toMatchObject({
+      orderId: order.id,
+      partId: part.id,
+    });
 
     const addServiceResponse = await request(app)
       .post(`/ordens/${order.id}/servicos`)
@@ -88,6 +94,9 @@ describe('E2E - Ordens', () => {
       .send({ serviceId: service.id });
 
     expect(addServiceResponse.status).toBe(201);
-    expect(addServiceResponse.body).toMatchObject({ orderId: order.id, serviceId: service.id });
+    expect(addServiceResponse.body).toMatchObject({
+      orderId: order.id,
+      serviceId: service.id,
+    });
   });
 });

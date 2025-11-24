@@ -80,6 +80,8 @@ describe('E2E - Dashboard', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(403);
-    expect(response.body).toEqual({ error: 'Acesso negado: permissão insuficiente.' });
+    expect(response.body).toEqual({
+      error: 'Acesso negado: permissão insuficiente.',
+    });
   });
 });

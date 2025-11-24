@@ -50,10 +50,15 @@ describe('E2E - Peças', () => {
       });
 
     expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({ name: 'Filtro de óleo E2E', stock: 4 });
+    expect(response.body).toMatchObject({
+      name: 'Filtro de óleo E2E',
+      stock: 4,
+    });
 
     const { prisma } = await setupE2ESuite();
-    const created = await prisma.part.findUnique({ where: { id: response.body.id } });
+    const created = await prisma.part.findUnique({
+      where: { id: response.body.id },
+    });
     expect(created).not.toBeNull();
   });
 });
