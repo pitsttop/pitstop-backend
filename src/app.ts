@@ -27,7 +27,15 @@ export const createApp = () => {
   const app = express();
 
   app.use(
-    cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }),
+    cors({
+      origin: [
+        'http://localhost:3000',      
+        'http://localhost:5173',      
+        'https://pitstop-frontend.vercel.app', 
+        'https://pitstop-frontend-dh5to3w0m-joao-lucas-araujo-siqueiras-projects.vercel.app'
+      ],
+      credentials: true, 
+    }),
   );
   app.use(morgan('dev'));
   app.use(express.json());
