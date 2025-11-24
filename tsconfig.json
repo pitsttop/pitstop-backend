@@ -2,11 +2,14 @@
   "compilerOptions": {
     "sourceMap": true,
     "outDir": "dist",
+    "rootDir": "./src",
     "strict": true,
     "lib": ["esnext"],
     "esModuleInterop": true,
     "module": "nodenext",
     "target": "es2020",
     "moduleResolution": "nodenext"
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "prisma", "**/*.spec.ts", "**/*.test.ts"]
 }
