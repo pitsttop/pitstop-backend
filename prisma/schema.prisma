@@ -55,8 +55,7 @@ model Order {
   vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
   vehicleId   String
 
-  // Quando a Ordem for deletada, o Prisma vai olhar para essas tabelas abaixo
-  // para ver o comportamento de cascata configurado nelas.
+  
   partsUsed   PartUsage[]
   servicesPerformed ServiceUsage[]
 }
@@ -80,14 +79,13 @@ model Service {
   orders      ServiceUsage[]
 }
 
-// --- MODELOS DE RELACIONAMENTO (Onde a mágica acontece) ---
+
 
 model PartUsage {
   id        String @id @default(cuid())
   quantity  Int    @default(1)
    
-  // ALTERADO: onDelete: Cascade adicionado
-  // Se a Order sumir, este registro de uso some junto.
+ 
   order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
   
@@ -100,8 +98,7 @@ model PartUsage {
 model ServiceUsage {
   id        String @id @default(cuid())
 
-  // ALTERADO: onDelete: Cascade adicionado
-  // Se a Order sumir, este registro de uso some junto.
+ 
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
   

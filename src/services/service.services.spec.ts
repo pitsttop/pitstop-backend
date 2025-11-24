@@ -1,5 +1,3 @@
-// src/services/service.services.spec.ts
-
 import { PrismaClient } from '@prisma/client';
 import {
   createService,
@@ -8,8 +6,6 @@ import {
   updateService,
   deleteService,
 } from './service.services';
-
-// Mock do Prisma para a entidade 'service'
 jest.mock('@prisma/client', () => {
   const mockPrismaClient = {
     service: {

@@ -3,7 +3,6 @@ import { PrismaClient, OrderStatus } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const getDashboardMetrics = async () => {
-  // Totais simples
   const [totalClients, totalVehicles, totalOrders, partsCount, servicesCount] =
     await Promise.all([
       prisma.client.count(),
@@ -13,14 +12,12 @@ export const getDashboardMetrics = async () => {
       prisma.service.count(),
     ]);
 
-  // Receita total (somente ordens finalizadas)
   const revenueAgg = await prisma.order.aggregate({
     _sum: { totalValue: true },
     where: { status: OrderStatus.FINISHED },
   });
   const totalRevenue = revenueAgg._sum.totalValue ?? 0;
 
-  // Contagem por status
   const [openCount, inProgressCount, finishedCount, canceledCount] =
     await Promise.all([
       prisma.order.count({ where: { status: OrderStatus.OPEN } }),
@@ -29,7 +26,8 @@ export const getDashboardMetrics = async () => {
       prisma.order.count({ where: { status: OrderStatus.CANCELED } }),
     ]);
 
-  const completionRate = totalOrders === 0 ? 0 : (finishedCount / totalOrders) * 100;
+  const completionRate =
+    totalOrders === 0 ? 0 : (finishedCount / totalOrders) * 100;
 
   return {
     totalClients,

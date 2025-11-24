@@ -27,7 +27,6 @@ describe('Client Service - Unit Tests', () => {
     jest.clearAllMocks();
   });
 
-  // Teste 1: para a função listClients
   it('deve chamar prisma.client.findMany e retornar uma lista de clientes', async () => {
     const mockClients = [
       { id: '1', name: 'Cliente Teste 1', phone: '123' },
@@ -41,22 +40,23 @@ describe('Client Service - Unit Tests', () => {
     expect(prisma.client.findMany).toHaveBeenCalledTimes(1);
   });
 
-  // Teste 2: para a função createClient
   it('deve chamar prisma.client.create com os dados corretos e retornar o novo cliente', async () => {
     const newClientData = {
       name: 'Cliente Novo',
       phone: '987654321',
       email: 'novo@email.com',
     };
+    const userId = 'user-123';
     const createdClient = {
       id: 'mock-id-123',
       ...newClientData,
       address: null,
+      userId,
       createdAt: new Date(),
     };
     (prisma.client.create as jest.Mock).mockResolvedValue(createdClient);
 
-    const result = await createClient(newClientData);
+    const result = await createClient(newClientData, userId);
 
     expect(result).toEqual(createdClient);
     expect(prisma.client.create).toHaveBeenCalledTimes(1);
@@ -65,10 +65,11 @@ describe('Client Service - Unit Tests', () => {
         name: newClientData.name,
         phone: newClientData.phone,
         email: newClientData.email,
+        address: null,
+        userId,
       },
     });
   });
-  // Teste 3: para a função findClientById
   it('deve chamar prisma.client.findUnique e retornar um cliente quando o ID existir', async () => {
     const mockClient = {
       id: 'valid-id',
@@ -97,7 +98,6 @@ describe('Client Service - Unit Tests', () => {
       where: { id: 'invalid-id' },
     });
   });
-  // Teste 4: para a função updateClient
   it('deve chamar prisma.client.update com os dados corretos e retornar o cliente atualizado', async () => {
     const clientId = 'client-id-to-update';
     const updateData = { name: 'Nome Atualizado' };
@@ -121,7 +121,6 @@ describe('Client Service - Unit Tests', () => {
     });
   });
 
-  // Teste 6: para a função deleteClient
   it('deve chamar prisma.client.delete com o ID correto', async () => {
     const clientId = 'client-id-to-delete';
     (prisma.client.delete as jest.Mock).mockResolvedValue({});
